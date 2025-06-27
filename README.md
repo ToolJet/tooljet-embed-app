@@ -32,9 +32,9 @@ A complete solution for embedding ToolJet applications with Express.js backend a
    PORT=3000
    TOOLJET_EMBED_APP_URL=https://your-tooljet-instance.com/api/embed-app
    TOOLJET_AUTH_TOKEN=your-base64-encoded-auth-token
-   USER_EMAIL=your-email@example.com
-   TOOLJET_APP_ID=your-app-id-here
    ```
+   
+   Note: Email and App ID are now entered via the frontend form.
 
 ## 🏃‍♂️ Running the Application
 
@@ -59,24 +59,41 @@ The application will be available at `http://localhost:3000`
 | `PORT` | Server port | `3000` |
 | `TOOLJET_EMBED_APP_URL` | ToolJet embed API endpoint | `http://localhost:8082/api/embed-app` |
 | `TOOLJET_AUTH_TOKEN` | Base64 encoded auth token for Basic auth | `dG9vbGpldDp0b29samV0` |
-| `USER_EMAIL` | User email for authentication | `admin@tooljet.com` |
-| `TOOLJET_APP_ID` | ToolJet application ID | `2e9be257-31ba-46bb-8451-fcb601227aa7` |
+
+**Frontend Form Fields:**
+| Field | Description | Required | Example |
+|-------|-------------|----------|---------|
+| Email | User email for authentication | Yes | `admin@tooljet.com` |
+| App ID | ToolJet application ID | Yes | `2e9be257-31ba-46bb-8451-fcb601227aa7` |
+| Session Expiry | Session expiry time in milliseconds | No | `10000` |
+| PAT Expiry | Personal Access Token expiry in milliseconds | No | `10000` |
 
 ## 🎯 How It Works
 
-1. **Initial Load**: User accesses the root URL and sees the welcome page
-2. **Load App**: User clicks "Load App" button
-3. **API Call**: Frontend makes GET request to `/api/embed-app-url`
-4. **ToolJet API**: Backend calls ToolJet embed API with credentials
-5. **Iframe Load**: Frontend loads the returned `redirectUrl` in an iframe
-6. **Message Handling**: Listens for messages from the embedded app
-7. **Error Handling**: Shows re-authentication dialog on errors
+1. **Initial Load**: User accesses the root URL and sees the configuration form
+2. **Configure**: User fills in email, app ID, and optional expiry settings
+3. **Load App**: User clicks "Load App" button (enabled only when required fields are filled)
+4. **API Call**: Frontend makes POST request to `/api/embed-app-url` with form data
+5. **ToolJet API**: Backend calls ToolJet embed API with user credentials
+6. **Iframe Load**: Frontend loads the returned `redirectUrl` in an iframe
+7. **Message Handling**: Listens for messages from the embedded app
+8. **Error Handling**: Shows re-authentication dialog on errors
 
 ## 📡 API Endpoints
 
-### GET /api/embed-app-url
+### POST /api/embed-app-url
 
-Calls the ToolJet embed API and returns the redirect URL.
+Calls the ToolJet embed API with user-provided credentials and optional expiry settings.
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "appId": "2e9be257-31ba-46bb-8451-fcb601227aa7",
+  "sessionExpiry": 10000,  // Optional
+  "patExpiry": 10000       // Optional
+}
+```
 
 **Response (Success):**
 ```json
@@ -90,8 +107,8 @@ Calls the ToolJet embed API and returns the redirect URL.
 ```json
 {
   "success": false,
-  "error": 500,
-  "message": "Error description"
+  "error": 400,
+  "message": "Email and App ID are required"
 }
 ```
 
@@ -116,9 +133,12 @@ When a logout message is received:
 
 ## 🛡️ Error Handling
 
-The application handles error scenario:
-- **ToolJet App Errors**: Messages from the embedded application
+The application handles various error scenarios:
 
+- **Network Errors**: API connection failures
+- **Authentication Errors**: Invalid credentials or expired tokens
+- **ToolJet App Errors**: Messages from the embedded application
+- **Server Errors**: Backend processing issues
 
 ## 🔍 Troubleshooting
 
@@ -166,9 +186,10 @@ tooljet-embed-app/
     └── index.html        # Frontend application
 ```
 
+5. Submit a pull request
+
 ## 📞 Support
 
 For issues related to:
-- **This setup**: Check the troubleshooting section above
 - **ToolJet**: Refer to [ToolJet documentation](https://docs.tooljet.com/)
 - **Express.js**: Check [Express.js documentation](https://expressjs.com/)
